@@ -2,6 +2,8 @@ package Cliente;
 import java.awt.FontFormatException;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -37,15 +39,14 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
 
-
-public class Cliente 
+public class Cliente extends Thread
 {
 	// constantes Socket
 	public final static String HOST ="localhost";
 	public final static int puerto =5000;
 
 	// Constantes de encriptación
-	public final static String  AES = "AES";
+	public final static String AES = "AES";
 	public final static String BLOWFISH = "BLOWFISH";
 	public final static String RSA = "RSA";
 	public final static String HMACMD5 = "HMACMD5";
@@ -57,6 +58,14 @@ public class Cliente
 	public final static String ALGORITMOS = "ALGORITMOS:"+AES+":"+RSA+":"+HMACMD5;
 	public final static String OK = "ESTADO:OK";
 	public final static String ERROR = "ESTADO:ERROR";
+	public final static String INICIO = "INICIO";
+	public final static String CERRAR = "Cerrando conexión";
+	public final static String ACT1 = "ACT1";
+	public final static String ACT2 = "ACT2";
+
+
+	public final static String SERV = "SERVIDOR: ";
+	public final static String CLI = "CLIENTE: ";
 
 
 	//Atributos del socket
@@ -70,9 +79,13 @@ public class Cliente
 	private X509Certificate certificadoCliente;
 	private SecretKey desKey;
 	private final static String PADDING="AES/ECB/PKCS5Padding";
+	
+	private String algoritmos;
 
 
-	public Cliente() throws Exception{
+	public Cliente(String algs) {
+		this.algoritmos = algs;
+		
 		try {
 			socket = new Socket(HOST,  puerto);
 			escritor = new PrintWriter( socket.getOutputStream(), true);
@@ -80,121 +93,165 @@ public class Cliente
 		} catch (Exception e) {
 			System.err.println("Exception: " + e.getMessage()); System.exit(1);
 		}
+	
+	}
 
-
+	public void run() {
+		
 		BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
-		String fromServer;
-		String fromUser="";
-		int pasoActual= 0;
-		boolean usarComando = true;
+		String fromServer = "";
+		String fromServerCompuesto[];
+		String fromUser = "";
+		String coordenadas = "";
 		byte[] myByte = null;
-		int cantidades= 1;
 
-		while (ejecutar) {
+		try {
+		// Paso 1
+		System.out.println("Escriba el mensaje para enviar:"); 
+		fromUser = stdIn.readLine(); 
+		System.out.println("Mensaje ingresado: '" + fromUser + "'" ); 
+		System.out.println("Escriba las coordenadas para enviar (ej: 41 24.2028, 2 10.4418):");
+		coordenadas = stdIn.readLine();
+		if(verificarCoordenadas(coordenadas)) {
+			System.out.println("Coordenadas ingresadas: '" + coordenadas + "'" );
+		}
+		else {
+			System.out.println("Las coordenadas ingresadas no son válidas. Cerrrando conexión.");
+			cerrar();
+			System.exit(0);
+		}
+		System.out.println(CLI+fromUser);
+		escritor.println(fromUser);
+
+		// Paso 2
+
+		fromServer = lector.readLine();
+		System.out.println(SERV+fromServer);
+		if(!fromServer.equals(INICIO)) {
+			System.out.println(ERROR + " " + CERRAR);
+			cerrar();
+		}
+
+		// Paso 3
+		
+		System.out.println(CLI+algoritmos);
+		escritor.println(algoritmos);
+
+		// Paso 4
+		fromServer = lector.readLine();
+		System.out.println(SERV+fromServer);
+		verificar(fromServer);
+
+		// Paso 5
+		fromUser = CERTIFICADO;
+		escritor.println(fromUser);
+		System.out.println(CLI+fromUser);
+
+		// Paso 6
+		KeyPairGenerator keyGen = KeyPairGenerator.getInstance(RSA);
+		keyPair = keyGen.generateKeyPair();
+
+		Security.addProvider(new BouncyCastleProvider());
+		keyGen.initialize(1024);
+		X509Certificate certificadoServidor = generateV3Certificate(keyPair);
+
+		try {
+			myByte = certificadoServidor.getEncoded();
+		} catch (CertificateEncodingException e) { 
+			e.printStackTrace();
+		}
+
+		socket.getOutputStream().write(myByte);
+		socket.getOutputStream().flush();
 
 
-			//Decide cuál comando utilizar
-			if(usarComando)
-			{
-				if(pasoActual==0){
-					System.out.print("Escriba el mensaje para enviar:"); 
-					fromUser = stdIn.readLine(); pasoActual++;
-				}
+		// Paso 7
+		fromServer = lector.readLine();
+		System.out.println(SERV+fromServer);
+		verificar(fromServer);
 
-				else if(pasoActual==1){
-					fromUser= ALGORITMOS; pasoActual++;
-				}
-				else if(pasoActual==2){
-					fromUser= CERTIFICADO; pasoActual++;
-				}
-				else if(pasoActual ==3){
-					//Debería ser RSA o AES??
-					KeyPairGenerator keyGen = KeyPairGenerator.getInstance(RSA);
-					keyPair = keyGen.generateKeyPair();
+		// Paso 8
+		fromServer = lector.readLine();
+		System.out.println(SERV+fromServer);
+		if(!fromServer.equals("CERTSRV")) {
+			System.out.println(ERROR + " " + CERRAR);
+			cerrar();
+		}
 
-					Security.addProvider(new BouncyCastleProvider());
-					keyGen.initialize(1024);
-					X509Certificate certificadoServidor = generateV3Certificate(keyPair);
+		// Paso 9
+		verificarCertificado();
 
-					try {myByte = certificadoServidor.getEncoded();} catch (CertificateEncodingException e) { e.printStackTrace();}
-					pasoActual++;
-				}
-				else if (pasoActual ==4){
-					pasoActual++;
-				}
+		// Paso 10
+		fromServer = lector.readLine();
+		System.out.println(SERV + fromServer);
 
+		boolean seguridad = false;
+
+		if(fromServer.contains(":")) {
+			seguridad = true;
+		}
+
+		if(seguridad) {
+			
+			fromServerCompuesto = fromServer.split(":");
+
+			if(!fromServerCompuesto[0].equals(INICIO)) {
+				System.out.println(ERROR + " " + CERRAR);
+				cerrar();
 			}
-
-			if (fromUser != null && !fromUser.equals("-1")) 
-			{
-				if(pasoActual ==4)
-				{
-					System.out.println("Cliente:( "+pasoActual+")" + myByte); 
-
-					socket.getOutputStream().write(myByte);
-					socket.getOutputStream().flush();
-
-
-				}
-
-				else if(pasoActual ==3)
-				{
-					System.out.println("Cliente:( "+pasoActual+")" + fromUser); 
-
-					escritor.println(fromUser);
-					continue;
-				}
-
-				else
-				{
-					System.out.println("Cliente:( "+pasoActual+")" + fromUser); 
-
-					escritor.println(fromUser);
-
-					if(pasoActual==5)break;
-
-				}
-
-			}
-
-			if ((fromServer = lector.readLine()) != null)
-			{
-
-				System.out.println("Servidor: " + fromServer); 
-
-				if(fromServer.equals("ERROR"))
-				{
-					ejecutar = false;
-				}
-				if(pasoActual == 4)
-				{ 
-					while(cantidades<=2 &&(fromServer = lector.readLine()) != null)
-					{
-						System.out.println("Servidor: " + fromServer); 
-						cantidades++;
-						if(cantidades ==2){
-							verificarCertificado();
-						}
-					}
-					break;
-				}
-			}
-
-
-
-
+			
+			System.out.println("Llave servidor" +fromServerCompuesto[1]);
+			
+			
 
 		}
+		else if(!seguridad) {	
+			if(!fromServer.equals(INICIO)) {
+				System.out.println(ERROR + " " + CERRAR);
+				cerrar();
+			}
+
+			// Paso 11
+			escritor.println(ACT1);
+			System.out.println(CLI + ACT1);
+
+			// Paso 12
+			escritor.println(ACT2);
+			System.out.println(CLI + ACT2);
+
+		}
+
+		// Paso 13
+		fromServer = lector.readLine();
+		System.out.println(SERV + fromServer);
+		verificar(fromServer);
+		
+		} catch(Exception e) {
+			try {
+				cerrar();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}
+
+	}
+
+	public void cerrar() throws IOException {
 		escritor.close();
 		lector.close();
 		// cierre el socket y la entrada estándar
 		socket.close();
-
-
 	}
-	
-	
-	
+
+	public void verificar(String mensaje) throws IOException {
+		String[] mensajeC = mensaje.split(":");
+		if(mensajeC[1].equals(ERROR)) {
+			System.out.println(ERROR + " " + CERRAR);
+			cerrar();
+		}
+	}
+
 
 	//Generador de X509Certificate que necesita una llave por parámetro
 	public static X509Certificate generateV3Certificate(KeyPair pair) throws Exception {
@@ -230,10 +287,6 @@ public class Cliente
 		return certificate;
 	}
 
-	
-	
-	
-	
 	public void verificarCertificado() throws IOException, CertificateException
 	{
 		InputStream is = socket.getInputStream();
@@ -246,16 +299,24 @@ public class Cliente
 		try {
 			certificadoCliente = ((X509Certificate)certFactory.generateCertificate(inputStream));
 		} catch (CertificateException ce) {
-			System.out.println("Cliente:"+ERROR);
-			escritor.println( ERROR);
+			escritor.println(ERROR);
+			System.out.println(CLI + ERROR);
+			cerrar();
+
 		}
-		System.out.println("Cliente:"+OK);
-		escritor.println( OK);
+		escritor.println(OK);
+		System.out.println(CLI + OK);	
 	}
 
-	
-	
-	
+	public boolean verificarCoordenadas(String coordenadas) {
+		boolean correcto = false;
+
+		if(coordenadas.contains(",")) {
+			correcto = true;
+		}
+
+		return correcto;
+	}
 
 	public void descifrar(byte [] cipheredText) { try {
 		Cipher cipher = Cipher.getInstance(PADDING); cipher.init(Cipher.DECRYPT_MODE, desKey);
@@ -265,23 +326,13 @@ public class Cliente
 		System.out.println("Excepcion: " + e.getMessage()); }
 	}
 
-	
-	
-	
-	
 	public static String toHexString(byte[] array) {
 		return DatatypeConverter.printHexBinary(array);
 	}
-	
-	
-	
 
 	public static byte[] toByteArray(String s) {
 		return DatatypeConverter.parseHexBinary(s);
 	}
-	
-	
-	
 
 	public byte[] cifrar() { byte [] cipheredText;
 	try {
@@ -299,21 +350,26 @@ public class Cliente
 		System.out.println("Excepcion: " + e.getMessage());
 		return null; }
 	}
-	
+
 	private byte[] getKeyedDigest(byte[] buffer) { try {
 		MessageDigest md5 = MessageDigest.getInstance("MD5"); md5.update(buffer);
 		return md5.digest();
-		} catch (Exception e) { return null;
-		} }
-
+	} catch (Exception e) { return null;
+	} }
+	
 	public static void main(String[] args) throws IOException { 
+		File archivo = new File("./docs/Datos.txt");
+		BufferedReader lect = new BufferedReader(new FileReader(archivo));
+		String algoritmos = lect.readLine();
+		lect.close();
 		try {
-			Cliente cliente = new Cliente();
+			Cliente cliente = new Cliente(algoritmos);
+			cliente.start();
+			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-
 
 }
