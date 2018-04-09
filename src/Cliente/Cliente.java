@@ -7,11 +7,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.math.BigInteger;
 import java.net.Socket;
 import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.Provider;
 import java.security.Security;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
@@ -31,9 +34,12 @@ import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+
+
 
 public class Cliente extends Thread
 {
@@ -134,9 +140,9 @@ public class Cliente extends Thread
 		else {
 			System.out.println("El algoritmo " + alg3 + " no es válido como HMAC.");
 			System.exit(0);
-			
+
 		}
-		
+
 		System.out.println("Los algoritmos ingresados son válidos");
 
 
@@ -159,10 +165,16 @@ public class Cliente extends Thread
 	 * @throws IOException Se lanza si existe un problema al cerrar los componentes
 	 */
 	public void verificar(String mensaje) throws IOException {
-		String[] mensajeC = mensaje.split(":");
-		if(mensajeC[1].equals(ERROR)) {
-			System.out.println(ERROR + " " + CERRAR);
-			cerrar();
+		if(mensaje.equals("OK"))
+		{
+			return;
+			
+		}else {
+			String[] mensajeC = mensaje.split(":");
+			if(mensajeC[1].equals(ERROR)) {
+				System.out.println(ERROR + " " + CERRAR);
+				cerrar();
+			}
 		}
 	}
 
@@ -311,7 +323,7 @@ public class Cliente extends Thread
 	public static String hexadecimal(byte[] mensajeArreglo) {
 		return DatatypeConverter.printHexBinary(mensajeArreglo);
 	}
-	
+
 	public void run() {
 
 		BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
@@ -364,21 +376,19 @@ public class Cliente extends Thread
 			System.out.println(CLI+fromUser);
 
 			// Paso 6
-			KeyPairGenerator keyGen = KeyPairGenerator.getInstance(RSA);
-			keyPair = keyGen.generateKeyPair();
-
-			Security.addProvider(new BouncyCastleProvider());
+			
+			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+			this.keyPair = keyGen.generateKeyPair();
+			Security.addProvider((Provider)new BouncyCastleProvider());
 			keyGen.initialize(1024);
-			certificadoCliente = generateV3Certificate(keyPair);
-
-			try {
-				myByte = certificadoCliente.getEncoded();
-			} catch (CertificateEncodingException e) { 
-				e.printStackTrace();
-			}
-
-			socket.getOutputStream().write(myByte);
-			socket.getOutputStream().flush();
+			X509Certificate cert = generateV3Certificate(this.keyPair);
+			StringWriter wr = new StringWriter();
+			JcaPEMWriter pemWriter = new JcaPEMWriter((Writer)wr);
+			pemWriter.writeObject((Object)cert);
+			pemWriter.flush();
+			pemWriter.close();
+			String certStr = wr.toString();
+			escritor.println(certStr);
 
 
 			// Paso 7
@@ -396,6 +406,7 @@ public class Cliente extends Thread
 
 			// Paso 9
 			verificarCertificado();
+			
 
 			// Paso 10
 			fromServer = lector.readLine();
@@ -453,7 +464,7 @@ public class Cliente extends Thread
 			fromServer = lector.readLine();
 			System.out.println(SERV + fromServer);
 			verificar(fromServer);
-			
+
 			cerrar();
 
 		} catch(Exception e) {
@@ -467,7 +478,7 @@ public class Cliente extends Thread
 		}
 
 	}
-	
+
 	public static void main(String[] args) throws IOException { 
 		File archivo = new File("./docs/Datos.txt");
 		BufferedReader lect = new BufferedReader(new FileReader(archivo));
