@@ -230,7 +230,9 @@ public class Cliente extends Thread
 			cerrar();
 
 		}
+		
 		escritor.println(OK);
+		escritor.flush();
 		System.out.println(CLI + OK);	
 	}
 
@@ -388,7 +390,8 @@ public class Cliente extends Thread
 			pemWriter.flush();
 			pemWriter.close();
 			String certStr = wr.toString();
-			escritor.println(certStr);
+			System.out.println(certStr.split("-----END CERTIFICATE-----")[0]);
+			escritor.println(certStr.split("-----END CERTIFICATE-----")[0]+"\n"+"-----END CERTIFICATE-----");
 
 
 			// Paso 7
@@ -405,7 +408,10 @@ public class Cliente extends Thread
 			}
 
 			// Paso 9
+			
 			verificarCertificado();
+			
+			
 			
 
 			// Paso 10
