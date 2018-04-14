@@ -38,7 +38,11 @@ import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-
+/**
+ * 
+ * @author Santiago Sáenz 201512416
+ * @author Gabriel Pinto  201515275
+ */
 
 
 public class Cliente extends Thread
@@ -179,7 +183,13 @@ public class Cliente extends Thread
 	}
 
 
-	//Generador de X509Certificate que necesita una llave por parámetro
+	/**
+	 * Se genera un certificado digital respecto a una llave.
+	 * En el certificado debe existir la información que genere losa datos de la entidad.
+	 * @param Keypair pair 
+	 * @return X509Certificate
+	 * @throws Exception
+	 */
 	public static X509Certificate generateV3Certificate(KeyPair pair) throws Exception {
 		X500NameBuilder nameBuilder = new X500NameBuilder(BCStyle.INSTANCE);
 		nameBuilder.addRDN(BCStyle.OU, "OU");
@@ -212,7 +222,10 @@ public class Cliente extends Thread
 		}
 		return certificate;
 	}
-
+/**
+ * Verificar Certificado es el método de encargado de verificar si 
+ * el certifiacdo enviado por el proveedor es correcto.
+ */
 	public void verificarCertificado() throws IOException, CertificateException
 	{
 		InputStream is = socket.getInputStream();
@@ -223,6 +236,7 @@ public class Cliente extends Thread
 		InputStream inputStream = new ByteArrayInputStream(certificadoClienteBytes);
 
 		try {
+			// se intenta crear un certificado  con la informción enviada por el socket
 			certificadoServidor = ((X509Certificate)certFactory.generateCertificate(inputStream));
 		} catch (CertificateException ce) {
 			escritor.println(ERROR);
