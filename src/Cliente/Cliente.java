@@ -352,10 +352,12 @@ public class Cliente extends Thread
 		try {
 			// Paso 1
 			System.out.println("Escriba el mensaje para enviar:"); 
-			fromUser = stdIn.readLine(); 
+//			fromUser = stdIn.readLine(); 
+			fromUser = "HOLA";
 			System.out.println("Mensaje ingresado: '" + fromUser + "'" ); 
 			System.out.println("Escriba las coordenadas para enviar (ej: 41 24.2028, 2 10.4418):");
-			coordenadas = stdIn.readLine();
+//			coordenadas = stdIn.readLine();
+			coordenadas = "1,2";
 			if(verificarCoordenadas(coordenadas)) {
 				System.out.println("Coordenadas ingresadas: '" + coordenadas + "'" );
 			}
@@ -429,6 +431,10 @@ public class Cliente extends Thread
 			
 
 			// Paso 10
+			
+			//se mide el tiempo que demora en generar la llave
+				long inicio = System.currentTimeMillis();
+			
 			fromServer = lector.readLine();
 			System.out.println(SERV + fromServer);
 
@@ -438,6 +444,8 @@ public class Cliente extends Thread
 				seguridad = true;
 			}
 
+			long inicio1=0,fin1=0 ;
+			
 			if(seguridad) {
 
 				fromServerCompuesto = fromServer.split(":");
@@ -447,13 +455,25 @@ public class Cliente extends Thread
 					cerrar();
 				}
 
+				
+				
 				llaveCreada = descifrar(DatatypeConverter.parseHexBinary(fromServerCompuesto[1]), algs[2], this.keyPair.getPrivate());
 				llaveSimetrica = new SecretKeySpec(llaveCreada, 0, llaveCreada.length, algs[1]);
+				
+				long fin = System.currentTimeMillis();
+				System.out.println("El tiempo que demoró en hacer la llave fue de:"+(fin- inicio));
+				
+				
 				System.out.println(CLI + "Llave simétrica obtenida");
 
 				// Paso 11
 				byte[] act1A = cifrar(coordenadas.getBytes(), algs[1], llaveSimetrica);
 				String act1 = hexadecimal(act1A);
+				
+				//Se mide el tiempo desde que se envía el mensajes hasta que se acaba
+				
+				 inicio1 = System.currentTimeMillis();
+				
 				escritor.println(ACT1 + ":" + act1);
 				System.out.println(CLI + ACT1 + ":" + act1);
 
@@ -481,6 +501,12 @@ public class Cliente extends Thread
 			}
 
 			// Paso 13
+			
+			// se mide el final 
+			
+			 fin1 = System.currentTimeMillis();
+			
+			System.out.println("El servidor tardó aproximadamente :" + (fin1-inicio1));
 			fromServer = lector.readLine();
 			System.out.println(SERV + fromServer);
 			verificar(fromServer);
