@@ -48,8 +48,14 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 public class Cliente extends Thread
 {
 	// Constantes Socket
+	
+	
+	//GABYYYYY AQUÍ DEBE ESTAR LA IP DE DONDE ESTÉ CORRIENDO LA MÁQUINA
+	
 	public final static String HOST = "localhost";
-	public final static int puerto = 5000;
+	
+	
+	public final static int puerto = 8080;
 
 	// Constantes de encriptación
 	public final static String AES = "AES";
