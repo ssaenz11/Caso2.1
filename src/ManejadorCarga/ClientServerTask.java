@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.IOException;
 
 import Cliente.Cliente;
+import Cliente.ClienteSS;
 import uniandes.gload.core.Task;
 
 public class ClientServerTask extends Task
@@ -16,13 +17,12 @@ public class ClientServerTask extends Task
 
 	@Override
 	public void fail() {
-		System.out.println("falla");
+		System.out.println("Falla");
 	}
 
 	@Override
 	public void success() {
-		// TODO Auto-generated method stub
-
+		System.out.println("Exito");
 	}
 
 	@Override
@@ -39,6 +39,7 @@ public class ClientServerTask extends Task
 			algoritmos = lect.readLine();
 			lect.close();
 			Cliente cliente = new Cliente(algoritmos);
+			//ClienteSS clienteSS = new ClienteSS(algoritmos);
 			cliente.start();
 			
 			
@@ -49,12 +50,6 @@ public class ClientServerTask extends Task
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-
-
-
-
-
 
 	}
 

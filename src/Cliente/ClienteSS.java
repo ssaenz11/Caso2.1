@@ -45,7 +45,7 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
  */
 
 
-public class Cliente extends Thread
+public class ClienteSS extends Thread
 {
 	// Constantes Socket
 
@@ -101,7 +101,7 @@ public class Cliente extends Thread
 	 * Constructor de la clase cliente
 	 * @param algs Algoritmos a utilizar para el proceso
 	 */
-	public Cliente(String algs) {
+	public ClienteSS(String algs) {
 		this.algoritmos = algs;
 		this.algs = algoritmos.split(":");
 		//verificarAlgoritmos();
@@ -428,37 +428,26 @@ public class Cliente extends Thread
 			a = System.currentTimeMillis();
 
 
-
-			fromServerCompuesto = fromServer.split(":");
-
-			if(!fromServerCompuesto[0].equals(INICIO)) {
+			if(!fromServer.equals(INICIO)) {
 				System.out.println(ERROR + " " + CERRAR);
 				cerrar();
 			}
 
-			llaveCreada = descifrar(DatatypeConverter.parseHexBinary(fromServerCompuesto[1]), algs[2], this.keyPair.getPrivate());
-			llaveSimetrica = new SecretKeySpec(llaveCreada, 0, llaveCreada.length, algs[1]);
-			b = System.currentTimeMillis();
-			tiempos += (b-a) + ",";
-
 			// Paso 11
-			byte[] act1A = cifrar(coordenadas.getBytes(), algs[1], llaveSimetrica);
-			String act1 = hexadecimal(act1A);
-			escritor.println(ACT1 + ":" + act1);
-			a = System.currentTimeMillis();
-
+			escritor.println(ACT1);
+			System.out.println(CLI + ACT1);
 
 			// Paso 12
-			byte[] integridad = generarIntegridad(coordenadas.getBytes(), algs[3], llaveSimetrica);
-			byte[] act2A = cifrar(integridad, algs[2], certificadoServidor.getPublicKey());
-			String act2 = hexadecimal(act2A);
-			escritor.println(ACT2 + ":" + act2);
+			escritor.println(ACT2);
+			System.out.println(CLI + ACT2);
+
 
 
 			// Paso 13
 			fromServer = lector.readLine();
 			b = System.currentTimeMillis();
-			tiempos += (b-a) + ","+fromServer;
+			tiempos += (b-a) + ",";
+			verificar(fromServer);
 			System.out.println(tiempos);
 			cerrar();
 
@@ -480,7 +469,7 @@ public class Cliente extends Thread
 		String algoritmos = lect.readLine();
 		lect.close();
 		try {
-			Cliente cliente = new Cliente(algoritmos);
+			ClienteSS cliente = new ClienteSS(algoritmos);
 			cliente.start();
 
 		} catch (Exception e) {
