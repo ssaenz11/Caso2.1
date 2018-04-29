@@ -38,6 +38,8 @@ import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+
+import ManejadorCarga.Generator;
 /**
  * 
  * @author Santiago Sáenz 201512416
@@ -52,7 +54,7 @@ public class Cliente extends Thread
 
 	//GABYYYYY AQUÍ DEBE ESTAR LA IP DE DONDE ESTÉ CORRIENDO LA MÁQUINA
 
-	public final static String HOST = "172.24.42.72";
+	public final static String HOST = "localhost";
 
 
 	public final static int puerto = 8080;
@@ -96,15 +98,18 @@ public class Cliente extends Thread
 	private String[] algs;
 	private byte[] llaveCreada;
 	private SecretKey llaveSimetrica;
+	
+	private Generator generator;
 
 	/**
 	 * Constructor de la clase cliente
 	 * @param algs Algoritmos a utilizar para el proceso
 	 */
-	public Cliente(String algs) {
+	public Cliente(String algs, Generator gen) {
 		this.algoritmos = algs;
 		this.algs = algoritmos.split(":");
 		//verificarAlgoritmos();
+		this.generator = gen;
 
 		try {
 			socket = new Socket(HOST,  puerto);
@@ -351,7 +356,8 @@ public class Cliente extends Thread
 		String fromServerCompuesto[];
 		String fromUser = "";
 		String coordenadas = "";
-		String tiempos = "";
+		Long llave;
+		Long actu;
 		Long a;
 		Long b;
 
@@ -420,14 +426,9 @@ public class Cliente extends Thread
 
 			verificarCertificado();
 
-
-
-
 			// Paso 10
 			fromServer = lector.readLine();
 			a = System.currentTimeMillis();
-
-
 
 			fromServerCompuesto = fromServer.split(":");
 
@@ -439,7 +440,7 @@ public class Cliente extends Thread
 			llaveCreada = descifrar(DatatypeConverter.parseHexBinary(fromServerCompuesto[1]), algs[2], this.keyPair.getPrivate());
 			llaveSimetrica = new SecretKeySpec(llaveCreada, 0, llaveCreada.length, algs[1]);
 			b = System.currentTimeMillis();
-			tiempos += (b-a) + ",";
+			llave = b-a;
 
 			// Paso 11
 			byte[] act1A = cifrar(coordenadas.getBytes(), algs[1], llaveSimetrica);
@@ -458,8 +459,10 @@ public class Cliente extends Thread
 			// Paso 13
 			fromServer = lector.readLine();
 			b = System.currentTimeMillis();
-			tiempos += (b-a) + ","+fromServer;
-			System.out.println(tiempos);
+			actu = b-a;
+			
+			generator.aumentar(llave, actu);
+			
 			cerrar();
 
 		} catch(Exception e) {
@@ -480,8 +483,8 @@ public class Cliente extends Thread
 		String algoritmos = lect.readLine();
 		lect.close();
 		try {
-			Cliente cliente = new Cliente(algoritmos);
-			cliente.start();
+			//Cliente cliente = new Cliente(algoritmos, gen);
+			//cliente.start();
 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block

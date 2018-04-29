@@ -13,8 +13,16 @@ import uniandes.gload.core.Task;
 
 public class ClientServerTask extends Task
 {
+	
+	public Generator generator;
+	
+	public String algoritmos;
 
-
+	public ClientServerTask(Generator gen, String algs) {
+		generator = gen;
+		algoritmos = algs;	
+	}
+	
 	@Override
 	public void fail() {
 		System.out.println("Falla");
@@ -29,27 +37,9 @@ public class ClientServerTask extends Task
 	public void execute() {
 		// TODO Auto-generated method stub
 
-		File archivo = new File("./docs/Datos.txt");
-		BufferedReader lect = null;
-		String algoritmos = null;
-
-		try {
-			
-			lect = new BufferedReader(new FileReader(archivo));
-			algoritmos = lect.readLine();
-			lect.close();
-			Cliente cliente = new Cliente(algoritmos);
-			//ClienteSS clienteSS = new ClienteSS(algoritmos);
-			cliente.start();
-			
-			
-		} catch (FileNotFoundException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		Cliente cliente = new Cliente(algoritmos, generator);
+		//ClienteSS clienteSS = new ClienteSS(algoritmos);
+		cliente.start();
 
 	}
 
