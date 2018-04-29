@@ -9,6 +9,7 @@ public class Generator {
 	 * Carga el generador de Servicios
 	 */
 	private LoadGenerator generator;
+	
 
 	/**
 	 * Constructor del generador
@@ -16,7 +17,6 @@ public class Generator {
 
 	public Generator()
 	{
-
 		Task work = createTask();
 		int numberOfTask = 100;
 		int gapBetweenTasks = 1000;
