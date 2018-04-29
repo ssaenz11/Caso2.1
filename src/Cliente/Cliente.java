@@ -54,7 +54,7 @@ public class Cliente extends Thread
 
 	//GABYYYYY AQUÍ DEBE ESTAR LA IP DE DONDE ESTÉ CORRIENDO LA MÁQUINA
 
-	public final static String HOST = "localhost";
+	public final static String HOST = "172.24.42.72";
 
 
 	public final static int puerto = 8080;
@@ -98,7 +98,6 @@ public class Cliente extends Thread
 	private String[] algs;
 	private byte[] llaveCreada;
 	private SecretKey llaveSimetrica;
-	
 	private Generator generator;
 
 	/**
@@ -107,9 +106,9 @@ public class Cliente extends Thread
 	 */
 	public Cliente(String algs, Generator gen) {
 		this.algoritmos = algs;
+		this.generator = gen;
 		this.algs = algoritmos.split(":");
 		//verificarAlgoritmos();
-		this.generator = gen;
 
 		try {
 			socket = new Socket(HOST,  puerto);
@@ -483,7 +482,7 @@ public class Cliente extends Thread
 		String algoritmos = lect.readLine();
 		lect.close();
 		try {
-			//Cliente cliente = new Cliente(algoritmos, gen);
+			//Cliente cliente = new Cliente(algoritmos);
 			//cliente.start();
 
 		} catch (Exception e) {

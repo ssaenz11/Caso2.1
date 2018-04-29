@@ -16,23 +16,26 @@ public class Generator {
 	 * Carga el generador de Servicios
 	 */
 	private LoadGenerator generator;
-	
+
+	private String algoritmos;
+
 	public static int completadas = 0;
-	
+
 	public static long obtenerLlave = 0;
-	
+
 	public static long actualizacion = 0;
 	
+
 	/**
 	 * Constructor del generador
 	 */
 
 	public Generator(String algs)
 	{
-		
-		Task work = createTask(algs);
+		algoritmos = algs;
+		Task work = createTask();
 		int numberOfTask = 100;
-		int gapBetweenTasks = 1000;
+		int gapBetweenTasks = 80;
 		generator = new LoadGenerator("Cliente - Prueba de carga del servidor", numberOfTask, work, gapBetweenTasks);
 		generator.generate();
 	}
@@ -40,9 +43,9 @@ public class Generator {
 	/**
 	 * Creador de un Task
 	 */
-	private Task createTask(String algs)
+	private Task createTask()
 	{
-		return new ClientServerTask(this, algs);
+		return new ClientServerTask(algoritmos, this);
 	}
 
 	/**
@@ -54,12 +57,14 @@ public class Generator {
 		File archivo = new File("./docs/Datos.txt");
 		BufferedReader lect = null;
 		String algoritmos = null;
+
 		try {
 
 			lect = new BufferedReader(new FileReader(archivo));
 			algoritmos = lect.readLine();
 			lect.close();
-			
+
+
 		} catch (FileNotFoundException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -67,7 +72,8 @@ public class Generator {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
+
 		@SuppressWarnings("unused")
 		Generator gen = new Generator(algoritmos);
 
@@ -77,7 +83,8 @@ public class Generator {
 		obtenerLlave += llave;
 		actualizacion += actualizar;
 		completadas ++;
-		System.out.println(obtenerLlave);
+		
+		System.out.println(obtenerLlave + "," + actualizar + "," + completadas);
 	}
 
 
