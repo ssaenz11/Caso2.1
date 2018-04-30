@@ -84,7 +84,7 @@ public class Generator {
 		actualizacion += actualizar;
 		completadas ++;
 		
-		System.out.println(obtenerLlave + "," + actualizar + "," + completadas);
+		System.out.println(obtenerLlave + "," + actualizacion + "," + completadas);
 	}
 
 
