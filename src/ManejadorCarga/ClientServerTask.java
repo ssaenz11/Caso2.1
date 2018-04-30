@@ -31,7 +31,7 @@ public class ClientServerTask extends Task
 		// TODO Auto-generated method stub
 
 		Cliente cliente = new Cliente(algoritmos, generator);
-		//ClienteSS clienteSS = new ClienteSS(algoritmos, generator);
+		//ClienteSS cliente = new ClienteSS(algoritmos, generator);
 		cliente.start();
 	}
 
