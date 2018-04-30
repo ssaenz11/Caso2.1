@@ -38,6 +38,8 @@ import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+
+import ManejadorCarga.Generator;
 /**
  * 
  * @author Santiago Sáenz 201512416
@@ -52,7 +54,7 @@ public class ClienteSS extends Thread
 
 	//GABYYYYY AQUÍ DEBE ESTAR LA IP DE DONDE ESTÉ CORRIENDO LA MÁQUINA
 
-	public final static String HOST = "172.24.42.72";
+	public final static String HOST = "172.24.42.96";
 
 
 	public final static int puerto = 8080;
@@ -96,13 +98,15 @@ public class ClienteSS extends Thread
 	private String[] algs;
 	private byte[] llaveCreada;
 	private SecretKey llaveSimetrica;
+	private Generator generator;
 
 	/**
 	 * Constructor de la clase cliente
 	 * @param algs Algoritmos a utilizar para el proceso
 	 */
-	public ClienteSS(String algs) {
+	public ClienteSS(String algs, Generator gen) {
 		this.algoritmos = algs;
+		this.generator = gen;
 		this.algs = algoritmos.split(":");
 		//verificarAlgoritmos();
 
@@ -351,7 +355,8 @@ public class ClienteSS extends Thread
 		String fromServerCompuesto[];
 		String fromUser = "";
 		String coordenadas = "";
-		String tiempos = "";
+		Long llave;
+		Long actu;
 		Long a;
 		Long b;
 
@@ -420,13 +425,11 @@ public class ClienteSS extends Thread
 
 			verificarCertificado();
 
-
-
-
 			// Paso 10
 			fromServer = lector.readLine();
 			a = System.currentTimeMillis();
 
+			fromServerCompuesto = fromServer.split(":");
 
 			if(!fromServer.equals(INICIO)) {
 				System.out.println(ERROR + " " + CERRAR);
@@ -435,20 +438,20 @@ public class ClienteSS extends Thread
 
 			// Paso 11
 			escritor.println(ACT1);
-			System.out.println(CLI + ACT1);
+			a = System.currentTimeMillis();
 
 			// Paso 12
 			escritor.println(ACT2);
-			System.out.println(CLI + ACT2);
-
+		
 
 
 			// Paso 13
 			fromServer = lector.readLine();
 			b = System.currentTimeMillis();
-			tiempos += (b-a) + ",";
-			verificar(fromServer);
-			System.out.println(tiempos);
+			actu = b-a;
+			
+			generator.aumentar(0, actu);
+			
 			cerrar();
 
 		} catch(Exception e) {
@@ -469,8 +472,8 @@ public class ClienteSS extends Thread
 		String algoritmos = lect.readLine();
 		lect.close();
 		try {
-			ClienteSS cliente = new ClienteSS(algoritmos);
-			cliente.start();
+			//Cliente cliente = new Cliente(algoritmos);
+			//cliente.start();
 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
